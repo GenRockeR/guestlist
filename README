@@ -1,1 +1,16 @@
 Python module for FreeRadius Mac Authentication
+
+It uses a SQLite database with the following tables:
+
+** dbinfo **
++---------+
+| version |
++---------+
+- version: database schema version level
+
+** guestlist **
++-----+-------------+
+| mac | description |
++-----+-------------+
+- mac: mac address authorized
+- description: optional description for mac
