@@ -7,22 +7,21 @@ import logging
 
 VERSION = 1
 
-def _get_version(database):
-    '''Return database version or 0 if not valid'''
-    version = 0
-    try:
-        row = database.execute("SELECT version FROM dbinfo;").fetchone()
-        if row is not None:
-            version = row[0]
-    except sqlite3.OperationalError:
-        pass
-    return version
-
-
 class GuestList(object):
     '''
     List of authorized MACs.
-    ''' 
+    '''
+
+    def _get_version(self):
+        '''Return database version or 0 if not valid'''
+        version = 0
+        try:
+            row = self.db.execute("SELECT version FROM dbinfo;").fetchone()
+            if row is not None:
+                version = row[0]
+        except sqlite3.OperationalError:
+            pass
+        return version
 
     def __init__(self, filename):
         '''
@@ -32,7 +31,7 @@ class GuestList(object):
         self.filename = os.path.abspath(filename)
         self.log.info("Connecting to database: %s", self.filename)
         self.db = sqlite3.connect(self.filename)
-        version = _get_version(self.db)
+        version = self._get_version()
 
         if version == 0:
             self.initialize_db()
