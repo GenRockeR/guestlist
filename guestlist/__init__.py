@@ -47,6 +47,9 @@ class GuestList(object):
                              "Upgrade the schema to version %s for modifying "
                              "data.", self.version, VERSION)
 
+    def __del__(self):
+        self.db.close()
+
     def initialize_db(self):
         '''
         Initialize an empty database.
