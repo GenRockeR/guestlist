@@ -17,8 +17,6 @@ import radiusd
 
 import guestlist
 
-dbfile = "/var/lib/radiusd/guestlist.db"
-
 def _ret_tuple(value, reply, config):
     '''Build a valid radiusd response'''
     if reply is not None:
@@ -44,7 +42,7 @@ def authenticate(args):
             mac = t[1]
     if mac[0] == '"' and mac[-1] == '"':
         mac = mac[1:-1]
-    gl = guestlist.GuestList(dbfile)
+    gl = guestlist.GuestList(guestlist.DBFILE)
     if gl.authenticate(mac):
         return radiusd.RLM_MODULE_OK
     else:

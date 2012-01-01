@@ -6,6 +6,7 @@ import sqlite3
 import logging
 
 VERSION = 1
+DBFILE = "/var/lib/radiusd/guestlist.db"
 
 class GuestList(object):
     '''
