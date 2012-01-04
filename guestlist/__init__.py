@@ -23,6 +23,14 @@ class GuestList(object):
         except sqlite3.OperationalError:
             pass
         return version
+    
+    def _mac_cleanup(self, mac):
+        digits = set('0123456789abcdef')
+        macarg = mac
+        mac = mac.translate(None,'.:- ').lower()
+        if not digits.issuperset(set(mac)) or not len(mac) == 12:
+            raise ValueError('Invalid MAC address format ' + macarg)
+        return mac
 
     def __init__(self, filename):
         '''
@@ -70,6 +78,7 @@ class GuestList(object):
         '''
         Add a MAC as authorized to the database.
         '''
+        mac = self._mac_cleanup(mac)
         t = (mac, description)
         if self.version == VERSION:
             self.db.execute("INSERT INTO guestlist VALUES (?,?);", t)
@@ -83,6 +92,7 @@ class GuestList(object):
         '''
         Delete a MAC from the database.
         '''
+        mac = self._mac_cleanup(mac)
         t = (mac, )
         if self.version == VERSION:
             self.db.execute("DELETE FROM guestlist WHERE mac=?;", t)
@@ -96,6 +106,7 @@ class GuestList(object):
         '''
         Return True if a MAC is authorized.
         '''
+        mac = self._mac_cleanup(mac)
         t = (mac, )
         auth = False
         if self.version == 1:
@@ -121,6 +132,7 @@ class GuestList(object):
         if mac is None:
             q = self.db.execute("SELECT * from guestlist;")
         else:
+            mac = self._mac_cleanup(mac)
             t = (mac, )
             q = self.db.execute("SELECT * from guestlist WHERE mac=?", t)
         return q.fetchall()
