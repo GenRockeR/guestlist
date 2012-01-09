@@ -2,11 +2,13 @@
 
 import BaseHTTPServer
 import base64
+import urlparse
+import sqlite3
 
 import guestlist
 
 AUTHFILE = "/var/lib/radius/httpauth.conf"
-#AUTHFILE = "/tmp/httpauth.conf"
+AUTHFILE = "/tmp/httpauth.conf"
 
 html_page = '''<html><body>
 <div align="center"><a href="/">Inicio</a></div><hr>
@@ -46,6 +48,37 @@ Description: <input type="text" name="description"><br>
 </form></div>
 '''
 
+def html_post_authorize(db, form):
+    try:
+        description = form['description']
+    except KeyError:
+        description = None
+    try:
+        mac = form['mac']
+    except KeyError:
+        return '''<strong>Missing MAC address!</strong>'''
+    try:
+        db.authorize(mac, description)
+    except ValueError:
+        return '''<strong>Invalid MAC address!</strong>'''
+    except sqlite3.IntegrityError:
+        return '''<strong>MAC previously authorized!</strong>'''
+    except sqlite3.Error:
+        return '''<strong>Database Error!</strong>'''
+    
+    return '''<p>MAC <em>{0}</em> authorized</p>'''.format(mac) 
+
+def html_post_delete(db, form):
+    try:
+        mac = form['mac']
+    except KeyError:
+        return '''<strong>Invalid POST request!</strong>'''
+    try:
+        db.delete(mac)
+    except ValueError:
+        return '''<strong>Invalid MAC address!</strong>'''
+    return '''<p>MAC <em>{0}</em> deleted from database'''.format(mac)
+
 class ReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     auth = None
     server_version = 'guestlist/0.1'
@@ -73,6 +106,13 @@ class ReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html_page.format(body=body))
 
+    def form_decode(self):
+        length = int(self.headers.get('Content-Length', '0'))
+        d = urlparse.parse_qs(self.rfile.read(length))
+        for k in d.keys():
+            d[k] = d[k][0]
+        return d
+
     def do_GET(self):
         if not self.validate_auth():
             self.send_auth_request()
@@ -89,7 +129,29 @@ class ReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_error(404)
             return
         self.send_html(html)
-   
+
+    def do_POST(self):
+        if not self.validate_auth():
+            self.send_auth_request()
+            return
+        
+        form = self.form_decode()
+        
+        #print ' '.join(['POST ',self.path, self.request_version])
+        #print self.headers
+        #print form
+        
+        db = guestlist.GuestList(guestlist.DBFILE)
+        if self.path == '/authorize':
+            self.send_html(html_post_authorize(db, form))
+            return
+        
+        if self.path == '/delete':
+            self.send_html(html_post_delete(db,form))
+            return
+        
+        self.send_error(404)
+
 if __name__ == '__main__':
     addr = ('', 8080)
     httpd = BaseHTTPServer.HTTPServer(addr, ReqHandler)
