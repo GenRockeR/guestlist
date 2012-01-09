@@ -9,7 +9,7 @@ AUTHFILE = "/var/lib/radius/httpauth.conf"
 #AUTHFILE = "/tmp/httpauth.conf"
 
 html_page = '''<html><body>
-<a href="/">Inicio</a><br>
+<div align="center"><a href="/">Inicio</a></div><hr>
 {body}
 </body></html>
 '''
@@ -30,16 +30,20 @@ def html_table(db):
 
 def html_mac(db, mac):
     data = db.get_data(mac)
-    data = data.pop()
-    html = '''MAC: {0}<br> Desc: {1}'''.format(data[0], data[1])
+    data = data.pop() #TODO: check data is not empty
+    html = '''<strong>{0}</strong><br><em>{1}</em>
+    <form action="/delete" method="post">
+    <input type="hidden" name="mac" value="{0}">
+    <input type="submit" value="Delete">
+    </form>'''.format(data[0], data[1])
     return html
 
-html_authorize = '''
-<form>
-Mac: <input type="text" name="mac" /><br />
-Description: <input type="text" name="description" /><br />
-<input type="submit" value="Submit" />
-</form>
+html_authorize_form = '''
+<div><form action="/authorize" method="post">
+Mac: <input type="text" name="mac" size=20><br>
+Description: <input type="text" name="description"><br>
+<input type="submit" value="Authorize">
+</form></div>
 '''
 
 class ReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -77,7 +81,7 @@ class ReqHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         db = guestlist.GuestList(guestlist.DBFILE)
         
         if self.path == '/':
-            self.send_html(html_table(db))
+            self.send_html(html_authorize_form + '<hr>' + html_table(db))
             return
         try:
             html = html_mac(db, self.path.lstrip('/'))
