@@ -7,8 +7,8 @@ import sqlite3
 
 import guestlist
 
-AUTHFILE = "/var/lib/radius/httpauth.conf"
-AUTHFILE = "/tmp/httpauth.conf"
+AUTHFILE = "/var/lib/radiusd/httpauth.conf"
+#AUTHFILE = "/tmp/httpauth.conf"
 
 html_page = '''<html><body>
 <div align="center"><a href="/">Inicio</a></div><hr>
